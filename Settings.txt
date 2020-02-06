@@ -13,8 +13,10 @@ settings
 		General
 		{
 			Allow Hero Switching: Off
+			Game Mode Start: Manual
 			Hero Limit: Off
 			Respawn Time Scalar: 25%
+			Score To Win: 7
 		}
 	}
 
@@ -26,6 +28,7 @@ settings
 			{
 				Damage Dealt: 500%
 				Deflect: Off
+				Health: 10%
 				No Ammunition Requirement: On
 				Primary Fire: Off
 				Secondary Fire: Off
@@ -36,6 +39,7 @@ settings
 			Torbjörn
 			{
 				Deploy Turret: Off
+				Health: 10%
 				No Ammunition Requirement: On
 				Overload: Off
 				Quick Melee: Off
