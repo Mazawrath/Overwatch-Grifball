@@ -22,12 +22,18 @@ settings
 	{
 		General
 		{
+			Damage Dealt: 500%
+			Health: 10%
+
 			Genji
 			{
+				Damage Dealt: 500%
 				Deflect: Off
-				Infinite Ultimate Duration: On
-				Spawn With Ultimate Ready: On
+				No Ammunition Requirement: On
+				Primary Fire: Off
+				Secondary Fire: Off
 				Swift Strike: Off
+				Ultimate Ability Dragonblade: Off
 			}
 
 			Torbjörn
@@ -35,6 +41,7 @@ settings
 				Deploy Turret: Off
 				No Ammunition Requirement: On
 				Overload: Off
+				Quick Melee: Off
 				Ultimate Ability Molten Core: Off
 				Weapons Enabled: Forge Hammer Only
 			}
@@ -57,6 +64,7 @@ variables
 	player:
 		1: PlayerTargeted
 		2: PlayerInRange
+		3: LungeEnabled
 }
 
 rule("Set global variables")
@@ -69,6 +77,22 @@ rule("Set global variables")
 	actions
 	{
 		Set Global Variable(ViewAngle, 15);
+		Set Global Variable(DistanceToTarget, 4);
+	}
+}
+
+rule("Set player variables")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, LungeEnabled, True);
 	}
 }
 
@@ -85,26 +109,53 @@ disabled rule("Create ball")
 	}
 }
 
-rule("Player can only swing once")
+rule("Torb can only swing hammer once")
 {
 	event
 	{
 		Ongoing - Each Player;
 		All;
+		Torbjörn;
+	}
+
+	conditions
+	{
+		Is Firing Primary(Event Player) == True;
+		Player Variable(Event Player, LungeEnabled) == True;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, LungeEnabled, False);
+		Set Primary Fire Enabled(Event Player, False);
+		Wait(0.250, Ignore Condition);
+		Set Primary Fire Enabled(Event Player, True);
+		Set Player Variable(Event Player, LungeEnabled, True);
+	}
+}
+
+rule("Genji can only swing sword once")
+{
+	event
+	{
+		Ongoing - Each Player;
 		All;
+		Genji;
 	}
 
 	conditions
 	{
 		Is Button Held(Event Player, Primary Fire) == True;
+		Player Variable(Event Player, LungeEnabled) == True;
 	}
 
 	actions
 	{
-		Press Button(Event Player, Primary Fire);
-		Set Primary Fire Enabled(Event Player, False);
-		Wait(0.500, Ignore Condition);
-		Set Primary Fire Enabled(Event Player, True);
+		Set Player Variable(Event Player, LungeEnabled, False);
+		Set Ultimate Ability Enabled(Event Player, False);
+		disabled Wait(1, Ignore Condition);
+		disabled Set Primary Fire Enabled(Event Player, True);
+		Set Player Variable(Event Player, LungeEnabled, True);
 	}
 }
 
@@ -123,19 +174,20 @@ rule("Create target particle")
 	}
 }
 
-rule("Lunge towards targeted player")
+rule("Genji Lunge towards targeted player")
 {
 	event
 	{
 		Ongoing - Each Player;
 		All;
-		All;
+		Genji;
 	}
 
 	conditions
 	{
-		Is Button Held(Event Player, Primary Fire) == True;
+		Is Button Held(Event Player, Melee) == True;
 		Player Variable(Event Player, PlayerInRange) == True;
+		Player Variable(Event Player, LungeEnabled) == True;
 	}
 
 	actions
@@ -144,7 +196,35 @@ rule("Lunge towards targeted player")
 		Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), 9,
 			To World, Cancel Contrary Motion);
 		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 70,
-			To World, Direction and Turn Rate);
+			To World, None);
+		Wait(0.250, Ignore Condition);
+		Stop Facing(Event Player);
+	}
+}
+
+rule("Rein Lunge towards targeted player")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Torbjörn;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Primary Fire) == True;
+		Player Variable(Event Player, PlayerInRange) == True;
+		Player Variable(Event Player, LungeEnabled) == True;
+	}
+
+	actions
+	{
+		Apply Impulse(Event Player, Up, 4, To World, Cancel Contrary Motion);
+		Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), 9,
+			To World, Cancel Contrary Motion);
+		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 70,
+			To World, None);
 		Wait(0.250, Ignore Condition);
 		Stop Facing(Event Player);
 	}
