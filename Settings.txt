@@ -12,6 +12,7 @@ settings
 
 		General
 		{
+			Allow Hero Switching: Off
 			Hero Limit: Off
 			Respawn Time Scalar: 25%
 		}
@@ -55,6 +56,7 @@ variables
 {
 	global:
 		0: ViewAngle
+		1: PlayerSwapCooldown
 
 	player:
 		1: PlayerTargeted
@@ -62,6 +64,7 @@ variables
 		3: LungeEnabled
 		4: DistanceToAllowLunge
 		5: LungeStrength
+		6: HeroSwapCooldown
 }
 
 subroutines
@@ -139,6 +142,25 @@ rule("Set global variables")
 	actions
 	{
 		Set Global Variable(ViewAngle, 15);
+		Set Global Variable(PlayerSwapCooldown, 1.500);
+	}
+}
+
+rule("Set player variables")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, HeroSwapCooldown, 0);
+		Chase Player Variable At Rate(Event Player, HeroSwapCooldown, 0, 1, Destination and Rate);
+		Preload Hero(Event Player, Hero(Genji));
+		Preload Hero(Event Player, Hero(Torbjörn));
 	}
 }
 
@@ -246,6 +268,32 @@ rule("Create target particle")
 	actions
 	{
 		Create Effect(Event Player, Bad Aura, Red, Player Variable(Event Player, PlayerTargeted), 1, Position and Radius);
+	}
+}
+
+rule("Swap heroes on secondary fire")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Secondary Fire) == True;
+		Player Variable(Event Player, HeroSwapCooldown) == 0;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, HeroSwapCooldown, Global Variable(PlayerSwapCooldown));
+		If(Compare(Hero Of(Event Player), ==, Hero(Genji)));
+			Start Forcing Player To Be Hero(Event Player, Hero(Torbjörn));
+		Else;
+			Start Forcing Player To Be Hero(Event Player, Hero(Genji));
+		End;
 	}
 }
 
