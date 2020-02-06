@@ -7,6 +7,7 @@ settings
 			enabled maps
 			{
 				Workshop Chamber
+				Workshop Island
 			}
 		}
 
@@ -96,7 +97,29 @@ rule("Create target particle")
 
 	actions
 	{
-		Create Effect(Event Player, Bad Aura, Red, Player Variable(Event Player, PlayerTargeted), 1, Visible To Position and Radius);
+		Create Effect(Event Player, Bad Aura, Red, Player Variable(Event Player, PlayerTargeted), 1, Position and Radius);
+	}
+}
+
+rule("Lunge towards targeted player")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Primary Fire) == True;
+	}
+
+	actions
+	{
+		Apply Impulse(Event Player, Up, 6, To World, Cancel Contrary Motion);
+		Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), 9,
+			To World, Cancel Contrary Motion);
 	}
 }
 
