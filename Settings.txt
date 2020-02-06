@@ -309,6 +309,32 @@ rule("Genji - Use melee on primary fire button press")
 	}
 }
 
+rule("Genji - Delay melee")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Genji;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Melee) == True;
+	}
+
+	actions
+	{
+		"This delay is used to simulate the energy swords cast. Without this, Genji's cast is next to nothing and can kill Torb in every fight."
+		Wait(0.050, Ignore Condition);
+		Allow Button(Event Player, Melee);
+		Start Holding Button(Event Player, Melee);
+		Wait(0.100, Ignore Condition);
+		Stop Holding Button(Event Player, Melee);
+		Disallow Button(Event Player, Melee);
+	}
+}
+
 rule("Genji - Trigger lunge")
 {
 	event
