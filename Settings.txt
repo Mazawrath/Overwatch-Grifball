@@ -139,10 +139,10 @@ rule("Lunge towards targeted player")
 
 	actions
 	{
-		Apply Impulse(Event Player, Up, 6, To World, Cancel Contrary Motion);
+		Apply Impulse(Event Player, Up, 4, To World, Cancel Contrary Motion);
 		Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), 9,
 			To World, Cancel Contrary Motion);
-		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 100,
+		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 70,
 			To World, Direction and Turn Rate);
 		Wait(0.250, Ignore Condition);
 		Stop Facing(Event Player);
