@@ -30,18 +30,19 @@ settings
 				Swift Strike: Off
 			}
 
-			Reinhardt
+			Torbjörn
 			{
-				Barrier Field: Off
-				Charge: Off
-				Fire Strike: Off
-				Ultimate Ability Earthshatter: Off
+				Deploy Turret: Off
+				No Ammunition Requirement: On
+				Overload: Off
+				Ultimate Ability Molten Core: Off
+				Weapons Enabled: Forge Hammer Only
 			}
 
 			enabled heroes
 			{
 				Genji
-				Reinhardt
+				Torbjörn
 			}
 		}
 	}
@@ -173,11 +174,11 @@ rule("Spawn Dummies")
 
 	actions
 	{
-		Create Dummy Bot(Hero(Reinhardt), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
+		Create Dummy Bot(Hero(Torbjörn), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
 		Create Dummy Bot(Hero(Genji), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Reinhardt), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
+		Create Dummy Bot(Hero(Torbjörn), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
 		Create Dummy Bot(Hero(Genji), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Reinhardt), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
+		Create Dummy Bot(Hero(Torbjörn), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
 		Create Dummy Bot(Hero(Genji), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
 	}
 }
