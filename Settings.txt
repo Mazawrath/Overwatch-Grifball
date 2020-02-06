@@ -67,6 +67,11 @@ variables
 		3: LungeEnabled
 }
 
+subroutines
+{
+	0: LungeAtPlayer
+}
+
 rule("Set global variables")
 {
 	event
@@ -109,7 +114,7 @@ disabled rule("Create ball")
 	}
 }
 
-rule("Torb can only swing hammer once")
+rule("Torbjorn - Swing hammer once")
 {
 	event
 	{
@@ -131,102 +136,6 @@ rule("Torb can only swing hammer once")
 		Wait(0.250, Ignore Condition);
 		Set Primary Fire Enabled(Event Player, True);
 		Set Player Variable(Event Player, LungeEnabled, True);
-	}
-}
-
-rule("Genji can only swing sword once")
-{
-	event
-	{
-		Ongoing - Each Player;
-		All;
-		Genji;
-	}
-
-	conditions
-	{
-		Is Button Held(Event Player, Primary Fire) == True;
-		Player Variable(Event Player, LungeEnabled) == True;
-	}
-
-	actions
-	{
-		Set Player Variable(Event Player, LungeEnabled, False);
-		Set Ultimate Ability Enabled(Event Player, False);
-		disabled Wait(1, Ignore Condition);
-		disabled Set Primary Fire Enabled(Event Player, True);
-		Set Player Variable(Event Player, LungeEnabled, True);
-	}
-}
-
-rule("Create target particle")
-{
-	event
-	{
-		Ongoing - Each Player;
-		All;
-		All;
-	}
-
-	actions
-	{
-		Create Effect(Event Player, Bad Aura, Red, Player Variable(Event Player, PlayerTargeted), 1, Position and Radius);
-	}
-}
-
-rule("Genji Lunge towards targeted player")
-{
-	event
-	{
-		Ongoing - Each Player;
-		All;
-		Genji;
-	}
-
-	conditions
-	{
-		Is Button Held(Event Player, Melee) == True;
-		Player Variable(Event Player, PlayerInRange) == True;
-		Player Variable(Event Player, LungeEnabled) == True;
-	}
-
-	actions
-	{
-		Apply Impulse(Event Player, Up, 4, To World, Cancel Contrary Motion);
-		Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), 9,
-			To World, Cancel Contrary Motion);
-		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 70,
-			To World, None);
-		Wait(0.250, Ignore Condition);
-		Stop Facing(Event Player);
-	}
-}
-
-rule("Rein Lunge towards targeted player")
-{
-	event
-	{
-		Ongoing - Each Player;
-		All;
-		Torbjörn;
-	}
-
-	conditions
-	{
-		Is Button Held(Event Player, Primary Fire) == True;
-		Player Variable(Event Player, PlayerInRange) == True;
-		Player Variable(Event Player, LungeEnabled) == True;
-	}
-
-	actions
-	{
-		Apply Impulse(Event Player, Up, 4, To World, Cancel Contrary Motion);
-		Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), 9,
-			To World, Cancel Contrary Motion);
-		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 70,
-			To World, None);
-		Wait(0.250, Ignore Condition);
-		Stop Facing(Event Player);
 	}
 }
 
@@ -257,6 +166,167 @@ rule("Get player to target")
 		End;
 		Wait(0.250, Ignore Condition);
 		Loop;
+	}
+}
+
+rule("Create target particle")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Create Effect(Event Player, Bad Aura, Red, Player Variable(Event Player, PlayerTargeted), 1, Position and Radius);
+	}
+}
+
+rule("Genji - Disable double jump in the air")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Genji;
+	}
+
+	conditions
+	{
+		Is On Ground(Event Player) == False;
+	}
+
+	actions
+	{
+		Disallow Button(Event Player, Jump);
+	}
+}
+
+rule("Genji - Enable double jump on the ground")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Genji;
+	}
+
+	conditions
+	{
+		Is On Ground(Event Player) == True;
+	}
+
+	actions
+	{
+		Allow Button(Event Player, Jump);
+	}
+}
+
+rule("Genji - Use melee on primary fire button press")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Genji;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Primary Fire) == True;
+	}
+
+	actions
+	{
+		Press Button(Event Player, Melee);
+	}
+}
+
+rule("Genji - Trigger lunge")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Genji;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Melee) == True;
+		Player Variable(Event Player, PlayerInRange) == True;
+		Player Variable(Event Player, LungeEnabled) == True;
+	}
+
+	actions
+	{
+		Call Subroutine(LungeAtPlayer);
+	}
+}
+
+rule("Torbjron - Trigger lunge")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Torbjörn;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Primary Fire) == True;
+		Player Variable(Event Player, PlayerInRange) == True;
+		Player Variable(Event Player, LungeEnabled) == True;
+	}
+
+	actions
+	{
+		Call Subroutine(LungeAtPlayer);
+	}
+}
+
+rule("Lunge at player")
+{
+	event
+	{
+		Subroutine;
+		LungeAtPlayer;
+	}
+
+	actions
+	{
+		Apply Impulse(Event Player, Up, 4, To World, Cancel Contrary Motion);
+		Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), 9,
+			To World, Cancel Contrary Motion);
+		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 70,
+			To World, None);
+		Wait(0.250, Ignore Condition);
+		Stop Facing(Event Player);
+	}
+}
+
+rule("Force Genji to use ultimate")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Has Spawned(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Event Player, 100);
+		Wait(0.250, Ignore Condition);
+		Press Button(Event Player, Ultimate);
 	}
 }
 
