@@ -170,17 +170,11 @@ rule("Spawn Dummies")
 
 	actions
 	{
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
-		Create Dummy Bot(Hero(Ana), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
+		Create Dummy Bot(Hero(Reinhardt), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
+		Create Dummy Bot(Hero(Genji), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
+		Create Dummy Bot(Hero(Reinhardt), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
+		Create Dummy Bot(Hero(Genji), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
+		Create Dummy Bot(Hero(Reinhardt), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
+		Create Dummy Bot(Hero(Genji), Team 2, -1.000, Vector(0, 0, 0), Vector(0, 0, 0));
 	}
 }
