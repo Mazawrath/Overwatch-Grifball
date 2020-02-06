@@ -65,6 +65,26 @@ disabled rule("Create ball")
 	}
 }
 
+rule("Player can only swing once")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Primary Fire) == True;
+	}
+
+	actions
+	{
+		Press Button(Event Player, Primary Fire);
+	}
+}
+
 rule("Create target particle")
 {
 	event
@@ -76,10 +96,7 @@ rule("Create target particle")
 
 	actions
 	{
-		Create Effect(Event Player, Bad Aura, Red, Position Of(First Of(Sorted Array(Filtered Array(All Living Players(Opposite Team Of(
-			Team Of(Event Player))), Is In View Angle(Event Player, Position Of(Current Array Element), 5)), Angle Between Vectors(
-			Facing Direction Of(Event Player), Direction Towards(Eye Position(Event Player), Eye Position(Current Array Element)))))), 1,
-			Visible To Position and Radius);
+		Create Effect(Event Player, Bad Aura, Red, Player Variable(Event Player, PlayerTargeted), 1, Visible To Position and Radius);
 	}
 }
 
@@ -94,7 +111,12 @@ rule("Get player to target")
 
 	actions
 	{
-		Set Player Variable(Event Player, PlayerTargeted, 0);
+		Set Player Variable(Event Player, PlayerTargeted, Position Of(First Of(Sorted Array(Filtered Array(All Living Players(
+			Opposite Team Of(Team Of(Event Player))), Is In View Angle(Event Player, Position Of(Current Array Element), 5)),
+			Angle Between Vectors(Facing Direction Of(Event Player), Direction Towards(Eye Position(Event Player), Eye Position(
+			Current Array Element)))))));
+		Wait(0.250, Ignore Condition);
+		Loop;
 	}
 }
 
