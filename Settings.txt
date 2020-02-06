@@ -72,7 +72,7 @@ subroutines
 	0: LungeAtPlayer
 }
 
-rule("Set global variables")
+rule("Create Effects")
 {
 	event
 	{
@@ -81,7 +81,10 @@ rule("Set global variables")
 
 	actions
 	{
-		Set Global Variable(ViewAngle, 15);
+		Create Effect(All Players(All Teams), Orb, Orange, Vector(0, 0, 0), 1, Visible To Position and Radius);
+		Create Effect(All Players(All Teams), Ring, White, 0, 1, Visible To Position and Radius);
+		Create Effect(All Players(All Teams), Ring, Team 1, Vector(17, 1, 0), 1, Visible To Position and Radius);
+		Create Effect(All Players(All Teams), Ring, Team 2, Vector(-17.000, 1, 0), 1, Visible To Position and Radius);
 	}
 }
 
