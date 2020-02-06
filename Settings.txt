@@ -88,6 +88,63 @@ rule("Create Effects")
 	}
 }
 
+rule("Spawn team 1")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Is Alive(Event Player) == True;
+		Has Spawned(Event Player) == True;
+	}
+
+	actions
+	{
+		Teleport(Event Player, Vector(17, 0, Random Real(-20.000, 20)));
+		Set Facing(Event Player, Direction Towards(Eye Position(Event Player), Vector(0, 0, 0)), To World);
+	}
+}
+
+rule("Spawn team 2")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		All;
+	}
+
+	conditions
+	{
+		Is Alive(Event Player) == True;
+		Has Spawned(Event Player) == True;
+	}
+
+	actions
+	{
+		Teleport(Event Player, Vector(-17.000, 0, Random Real(-20.000, 20)));
+		Set Facing(Event Player, Direction Towards(Eye Position(Event Player), Vector(0, 0, 0)), To World);
+	}
+}
+
+rule("Set global variables")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Set Global Variable(ViewAngle, 15);
+	}
+}
+
 rule("Torbjorn - Set player variables")
 {
 	event
@@ -117,21 +174,8 @@ rule("Genji - Set player variables")
 	actions
 	{
 		Set Player Variable(Event Player, LungeEnabled, True);
-		Set Player Variable(Event Player, LungeStrength, 9);
-		Set Player Variable(Event Player, DistanceToAllowLunge, 4);
-	}
-}
-
-disabled rule("Create ball")
-{
-	event
-	{
-		Ongoing - Global;
-	}
-
-	actions
-	{
-		Create Effect(All Players(All Teams), Orb, White, Vector(0, 0, 0), 1, Visible To Position and Radius);
+		Set Player Variable(Event Player, LungeStrength, 11);
+		Set Player Variable(Event Player, DistanceToAllowLunge, 5);
 	}
 }
 
