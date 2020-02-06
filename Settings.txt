@@ -327,28 +327,6 @@ rule("Lunge at player")
 	}
 }
 
-rule("Force Genji to use ultimate")
-{
-	event
-	{
-		Ongoing - Each Player;
-		All;
-		All;
-	}
-
-	conditions
-	{
-		Has Spawned(Event Player) == True;
-	}
-
-	actions
-	{
-		Set Ultimate Charge(Event Player, 100);
-		Wait(0.250, Ignore Condition);
-		Press Button(Event Player, Ultimate);
-	}
-}
-
 rule("// DEV TOOLS")
 {
 	event
