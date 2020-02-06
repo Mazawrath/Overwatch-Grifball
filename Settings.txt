@@ -106,7 +106,7 @@ rule("Spawn team 1")
 	actions
 	{
 		Teleport(Event Player, Vector(17, 0, Random Real(-20.000, 20)));
-		Set Facing(Event Player, Direction Towards(Eye Position(Event Player), Vector(0, 0, 0)), To World);
+		Set Facing(Event Player, Right, To World);
 	}
 }
 
@@ -128,7 +128,7 @@ rule("Spawn team 2")
 	actions
 	{
 		Teleport(Event Player, Vector(-17.000, 0, Random Real(-20.000, 20)));
-		Set Facing(Event Player, Direction Towards(Eye Position(Event Player), Vector(0, 0, 0)), To World);
+		Set Facing(Event Player, Left, To World);
 	}
 }
 
