@@ -156,6 +156,7 @@ rule("Torbjorn - Set player variables")
 
 	actions
 	{
+		"This simulates the gravity hammer. Which has a longer cast time but more range."
 		Set Player Variable(Event Player, LungeEnabled, True);
 		Set Player Variable(Event Player, LungeStrength, 11);
 		Set Player Variable(Event Player, DistanceToAllowLunge, 7);
@@ -173,9 +174,11 @@ rule("Genji - Set player variables")
 
 	actions
 	{
+		"This simulates the energy sword. Less cast time but less range."
 		Set Player Variable(Event Player, LungeEnabled, True);
-		Set Player Variable(Event Player, LungeStrength, 12);
-		Set Player Variable(Event Player, DistanceToAllowLunge, 5);
+		Set Player Variable(Event Player, LungeStrength, 11);
+		Set Player Variable(Event Player, DistanceToAllowLunge, 4.750);
+		Disallow Button(Event Player, Melee);
 	}
 }
 
