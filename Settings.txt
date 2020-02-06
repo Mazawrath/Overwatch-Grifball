@@ -284,6 +284,7 @@ rule("Genji - Enable double jump on the ground")
 	conditions
 	{
 		Is On Ground(Event Player) == True;
+		Is Button Held(Event Player, Jump) == False;
 	}
 
 	actions
