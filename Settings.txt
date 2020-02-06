@@ -67,7 +67,7 @@ rule("Set global variables")
 
 	actions
 	{
-		Set Global Variable(ViewAngle, 7);
+		Set Global Variable(ViewAngle, 15);
 	}
 }
 
