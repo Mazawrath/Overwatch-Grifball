@@ -21,9 +21,6 @@ settings
 	{
 		General
 		{
-			Damage Dealt: 500%
-			Health: 10%
-
 			Genji
 			{
 				Damage Dealt: 500%
