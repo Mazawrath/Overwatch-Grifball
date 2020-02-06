@@ -85,10 +85,25 @@ rule("Create Effects")
 
 	actions
 	{
-		Create Effect(All Players(All Teams), Orb, Orange, Vector(0, 0, 0), 1, Visible To Position and Radius);
+		Create Effect(All Players(All Teams), Orb, Orange, Global Variable(BombLocation), 0.001, Visible To Position and Radius);
 		Create Effect(All Players(All Teams), Ring, White, 0, 1, Visible To Position and Radius);
 		Create Effect(All Players(All Teams), Ring, Team 1, Vector(17, 1, 0), 1, Visible To Position and Radius);
 		Create Effect(All Players(All Teams), Ring, Team 2, Vector(-17.000, 1, 0), 1, Visible To Position and Radius);
+	}
+}
+
+rule("Create HUD Elements")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Create HUD Text(Filtered Array(All Players(All Teams), And(Not(Global Variable(BombPickedUp)), Player Variable(
+			Current Array Element, InDistanceOfBomb))), Custom String("Hold Reload to pick up bomb", Null, Null, Null), Null, Null, Left,
+			0, White, White, White, Visible To and String, Default Visibility);
 	}
 }
 
