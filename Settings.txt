@@ -84,6 +84,9 @@ rule("Player can only swing once")
 	actions
 	{
 		Press Button(Event Player, Primary Fire);
+		Set Primary Fire Enabled(Event Player, False);
+		Wait(0.500, Ignore Condition);
+		Set Primary Fire Enabled(Event Player, True);
 	}
 }
 
