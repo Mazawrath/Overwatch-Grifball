@@ -166,6 +166,7 @@ rule("Set global variables")
 	{
 		Set Global Variable(ViewAngle, 15);
 		Set Global Variable(PlayerSwapCooldown, 1.500);
+		Set Global Variable(BombLocation, Vector(0, 0.250, 0));
 	}
 }
 
@@ -200,8 +201,10 @@ rule("Torbjorn - Set player variables")
 	{
 		"This simulates the gravity hammer. Which has a longer cast time but more range."
 		Set Player Variable(Event Player, LungeEnabled, True);
-		Set Player Variable(Event Player, LungeStrength, 11);
-		Set Player Variable(Event Player, DistanceToAllowLunge, 7);
+		Set Player Variable(Event Player, LungeStrength, 13);
+		Set Player Variable(Event Player, DistanceToAllowLunge, 8);
+		"Apparently the custom game settings forget the genjis primary fire is disabled."
+		Set Primary Fire Enabled(Event Player, True);
 	}
 }
 
@@ -221,6 +224,8 @@ rule("Genji - Set player variables")
 		Set Player Variable(Event Player, LungeStrength, 11);
 		Set Player Variable(Event Player, DistanceToAllowLunge, 4.750);
 		Disallow Button(Event Player, Melee);
+		"Apparently the custom game settings forget the genjis primary fire is disabled."
+		Set Primary Fire Enabled(Event Player, False);
 	}
 }
 
@@ -274,7 +279,8 @@ rule("Get player to target")
 			Set Player Variable(Event Player, PlayerTargeted, Vector(0, -20.000, 0));
 			Set Player Variable(Event Player, PlayerInRange, False);
 		End;
-		Wait(0.250, Ignore Condition);
+		Set Player Variable(Event Player, InDistanceOfBomb, Compare(Distance Between(Event Player, Global Variable(BombLocation)), <=, 2));
+		Wait(0.001, Ignore Condition);
 		Loop;
 	}
 }
@@ -398,7 +404,7 @@ rule("Genji - Delay melee")
 	actions
 	{
 		"This delay is used to simulate the energy swords cast. Without this, Genji's cast is next to nothing and can kill Torb in every fight."
-		Wait(0.050, Ignore Condition);
+		Wait(0.100, Ignore Condition);
 		Allow Button(Event Player, Melee);
 		Start Holding Button(Event Player, Melee);
 		Wait(0.100, Ignore Condition);
@@ -479,7 +485,7 @@ rule("// DEV TOOLS")
 	}
 }
 
-disabled rule("Spawn Dummies - Team 1")
+rule("Spawn Dummies - Team 1")
 {
 	event
 	{
@@ -535,6 +541,8 @@ disabled rule("Dummies always use primary fire")
 		Wait(0.250, Ignore Condition);
 		Loop;
 	}
+}
+
 rule("Pickup bomb")
 {
 	event
