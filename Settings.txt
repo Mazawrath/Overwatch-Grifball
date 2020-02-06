@@ -363,7 +363,7 @@ rule("Lunge at player")
 
 	actions
 	{
-		Apply Impulse(Event Player, Up, 4, To World, Cancel Contrary Motion);
+		Apply Impulse(Event Player, Up, 2, To World, Cancel Contrary Motion);
 		Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)),
 			Player Variable(Event Player, LungeStrength), To World, Cancel Contrary Motion);
 		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 70,
