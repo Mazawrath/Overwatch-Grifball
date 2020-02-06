@@ -174,7 +174,7 @@ rule("Genji - Set player variables")
 	actions
 	{
 		Set Player Variable(Event Player, LungeEnabled, True);
-		Set Player Variable(Event Player, LungeStrength, 11);
+		Set Player Variable(Event Player, LungeStrength, 12);
 		Set Player Variable(Event Player, DistanceToAllowLunge, 5);
 	}
 }
