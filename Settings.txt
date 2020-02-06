@@ -1,0 +1,76 @@
+settings
+{
+	modes
+	{
+		Team Deathmatch
+		{
+			enabled maps
+			{
+				Workshop Chamber
+			}
+		}
+
+		General
+		{
+			Hero Limit: Off
+			Respawn Time Scalar: 25%
+		}
+	}
+
+	heroes
+	{
+		General
+		{
+			Genji
+			{
+				Deflect: Off
+				Infinite Ultimate Duration: On
+				Spawn With Ultimate Ready: On
+				Swift Strike: Off
+			}
+
+			Reinhardt
+			{
+				Barrier Field: Off
+				Charge: Off
+				Fire Strike: Off
+				Ultimate Ability Earthshatter: Off
+			}
+
+			enabled heroes
+			{
+				Genji
+				Reinhardt
+			}
+		}
+	}
+}
+
+rule("Create ball")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Create Effect(All Players(All Teams), Orb, White, Vector(0, 0, 0), 1, Visible To Position and Radius);
+	}
+}
+
+rule("Create target particle")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Create Effect(Event Player, Bad Aura, Red, Position Of(Player Closest To Reticle(Event Player, Opposite Team Of(Team Of(
+			Event Player)))), 1, Visible To Position and Radius);
+	}
+}
