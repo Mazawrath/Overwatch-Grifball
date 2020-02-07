@@ -73,6 +73,8 @@ variables
 		5: LungeStrength
 		6: HeroSwapCooldown
 		7: InDistanceOfBomb
+		8: ButtonIsHeld
+		9: TimeSinceHammerUsed
 }
 
 subroutines
@@ -200,11 +202,13 @@ rule("Torbjorn - Set player variables")
 	actions
 	{
 		"This simulates the gravity hammer. Which has a longer cast time but more range."
-		Set Player Variable(Event Player, LungeEnabled, True);
-		Set Player Variable(Event Player, LungeStrength, 13);
+		Set Player Variable(Event Player, LungeEnabled, False);
+		Set Player Variable(Event Player, LungeStrength, 10);
 		Set Player Variable(Event Player, DistanceToAllowLunge, 8);
 		"Apparently the custom game settings forget the genjis primary fire is disabled."
 		Set Primary Fire Enabled(Event Player, True);
+		Set Player Variable(Event Player, TimeSinceHammerUsed, 1);
+		Chase Player Variable At Rate(Event Player, TimeSinceHammerUsed, 1, 1, Destination and Rate);
 	}
 }
 
@@ -229,7 +233,7 @@ rule("Genji - Set player variables")
 	}
 }
 
-rule("Torbjorn - Swing hammer once")
+rule("Torbjorn - Lock hammer after swing")
 {
 	event
 	{
@@ -240,17 +244,39 @@ rule("Torbjorn - Swing hammer once")
 
 	conditions
 	{
-		Is Firing Primary(Event Player) == True;
-		Player Variable(Event Player, LungeEnabled) == True;
+		Is Button Held(Event Player, Primary Fire) == True;
+		Player Variable(Event Player, ButtonIsHeld) == False;
 	}
 
 	actions
 	{
-		Set Player Variable(Event Player, LungeEnabled, False);
+		Set Player Variable(Event Player, ButtonIsHeld, True);
 		Set Primary Fire Enabled(Event Player, False);
-		Wait(0.250, Ignore Condition);
-		Set Primary Fire Enabled(Event Player, True);
 		Set Player Variable(Event Player, LungeEnabled, True);
+		Wait(0.001, Ignore Condition);
+		Set Player Variable(Event Player, LungeEnabled, False);
+	}
+}
+
+rule("Torbjorn - Unlock hammer after swing")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Torbjörn;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Primary Fire) == False;
+		Player Variable(Event Player, ButtonIsHeld) == True;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, ButtonIsHeld, False);
+		Set Primary Fire Enabled(Event Player, True);
 	}
 }
 
@@ -449,6 +475,8 @@ rule("Torbjron - Trigger lunge")
 		Is Button Held(Event Player, Primary Fire) == True;
 		Player Variable(Event Player, PlayerInRange) == True;
 		Player Variable(Event Player, LungeEnabled) == True;
+		disabled Player Variable(Event Player, ButtonIsHeld) == False;
+		disabled Is Firing Primary(Event Player) == True;
 	}
 
 	actions
@@ -467,13 +495,20 @@ rule("Lunge at player")
 
 	actions
 	{
-		Apply Impulse(Event Player, Up, 2, To World, Cancel Contrary Motion);
-		Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)),
-			Player Variable(Event Player, LungeStrength), To World, Cancel Contrary Motion);
-		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 70,
-			To World, None);
-		Wait(0.250, Ignore Condition);
-		Stop Facing(Event Player);
+		If(Compare(Distance Between(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), >, 2.500));
+			If(Not(Is On Ground(Event Player)));
+				Apply Impulse(Event Player, Down, 1, To World, Cancel Contrary Motion);
+			Else;
+				Apply Impulse(Event Player, Up, 0.250, To World, Cancel Contrary Motion);
+			End;
+			Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), Subtract(
+				Player Variable(Event Player, LungeStrength), Y Component Of(Position Of(Event Player))), To World,
+				Incorporate Contrary Motion);
+			Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 100,
+				To World, None);
+			Wait(0.250, Ignore Condition);
+			Stop Facing(Event Player);
+		End;
 	}
 }
 
@@ -580,7 +615,6 @@ rule("Bomb follows carrier")
 
 	actions
 	{
-		Chase Global Variable At Rate(BombLocation, Add(Eye Position(Global Variable(BombCarrier)), Multiply(Eye Position(Global Variable(
-			BombCarrier)), 1)), 6, Destination and Rate);
+		Chase Global Variable At Rate(BombLocation, Eye Position(Global Variable(BombCarrier)), 6, Destination and Rate);
 	}
 }
