@@ -6,7 +6,7 @@ settings
 		{
 			enabled maps
 			{
-				Workshop Chamber
+				Workshop Island
 			}
 		}
 
@@ -64,6 +64,10 @@ variables
 		2: BombCarrier
 		3: BombLocation
 		4: BombPickedUp
+		6: BombCountdown
+		7: BombTimer
+		8: BombCountdownText
+		9: RespawnRequested
 
 	player:
 		1: PlayerTargeted
@@ -80,6 +84,8 @@ variables
 subroutines
 {
 	0: LungeAtPlayer
+	1: ExplodeBomb
+	2: StartGame
 }
 
 rule("Create Effects")
@@ -95,6 +101,10 @@ rule("Create Effects")
 		Create Effect(All Players(All Teams), Ring, White, 0, 1, Visible To Position and Radius);
 		Create Effect(All Players(All Teams), Ring, Team 1, Vector(17, 1, 0), 1, Visible To Position and Radius);
 		Create Effect(All Players(All Teams), Ring, Team 2, Vector(-17.000, 1, 0), 1, Visible To Position and Radius);
+		Create Effect(Filtered Array(All Players(Team 1), Compare(Current Array Element, ==, Global Variable(BombCarrier))), Light Shaft,
+			Team 2, Vector(-17.000, 0, 0), 1, Visible To Position and Radius);
+		Create Effect(Filtered Array(All Players(Team 2), Compare(Current Array Element, ==, Global Variable(BombCarrier))), Light Shaft,
+			Team 1, Vector(17, 0, 0), 1, Visible To Position and Radius);
 	}
 }
 
@@ -103,6 +113,11 @@ rule("Create HUD Elements")
 	event
 	{
 		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
 	}
 
 	actions
@@ -169,6 +184,9 @@ rule("Set global variables")
 		Set Global Variable(ViewAngle, 15);
 		Set Global Variable(PlayerSwapCooldown, 1.500);
 		Set Global Variable(BombLocation, Vector(0, 0.250, 0));
+		Set Global Variable(BombTimer, 3);
+		Chase Global Variable At Rate(BombCountdown, 0, 1, Destination and Rate);
+		Disable Built-In Game Mode Scoring;
 	}
 }
 
@@ -512,6 +530,57 @@ rule("Lunge at player")
 	}
 }
 
+rule("// GRIFBALL RULES")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+}
+
+rule("Pickup bomb")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Player Variable(Event Player, InDistanceOfBomb) == True;
+		Global Variable(BombPickedUp) == False;
+		Is Button Held(Event Player, Reload) == True;
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Small Message(All Players(All Teams), Custom String("Bomb taken", Null, Null, Null));
+		Set Global Variable(BombCarrier, Event Player);
+	}
+}
+
+rule("Bomb follows carrier")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Global Variable(BombCarrier) != Null;
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Chase Global Variable At Rate(BombLocation, Eye Position(Global Variable(BombCarrier)), 6, Destination and Rate);
+	}
+}
+
 rule("// DEV TOOLS")
 {
 	event
@@ -578,43 +647,183 @@ disabled rule("Dummies always use primary fire")
 	}
 }
 
-rule("Pickup bomb")
+rule("Bomb Reaches Site - Team 1")
 {
 	event
 	{
 		Ongoing - Each Player;
-		All;
+		Team 1;
 		All;
 	}
 
 	conditions
 	{
-		Player Variable(Event Player, InDistanceOfBomb) == True;
-		Global Variable(BombPickedUp) == False;
-		Is Button Held(Event Player, Reload) == True;
+		Event Player == Global Variable(BombCarrier);
+		Distance Between(Position Of(Event Player), Vector(-17.000, 0, 0)) <= 1;
+		Is Game In Progress == True;
 	}
 
 	actions
 	{
-		Small Message(All Players(All Teams), Custom String("Bomb taken", Null, Null, Null));
-		Set Global Variable(BombCarrier, Event Player);
+		Stop Chasing Global Variable(BombLocation);
+		Set Global Variable(BombCarrier, Null);
+		Set Global Variable(BombPickedUp, False);
+		Set Global Variable(BombLocation, Vector(-17.000, 0.250, 0));
+		Small Message(All Players(All Teams), Custom String("Bomb Armed", Null, Null, Null));
+		Call Subroutine(ExplodeBomb);
 	}
 }
 
-rule("Bomb follows carrier")
+rule("Bomb Reaches Site - Team 2")
 {
 	event
 	{
-		Ongoing - Global;
+		Ongoing - Each Player;
+		Team 2;
+		All;
 	}
 
 	conditions
 	{
-		Global Variable(BombCarrier) != Null;
+		Event Player == Global Variable(BombCarrier);
+		Distance Between(Position Of(Event Player), Vector(17, 0, 0)) <= 1;
+		Is Game In Progress == True;
 	}
 
 	actions
 	{
-		Chase Global Variable At Rate(BombLocation, Eye Position(Global Variable(BombCarrier)), 6, Destination and Rate);
+		Stop Chasing Global Variable(BombLocation);
+		Set Global Variable(BombCarrier, Null);
+		Set Global Variable(BombPickedUp, False);
+		Set Global Variable(BombLocation, Vector(17, 0.250, 0));
+		Small Message(All Players(All Teams), Custom String("Bomb Armed", Null, Null, Null));
+		Call Subroutine(ExplodeBomb);
+	}
+}
+
+disabled rule("Bomb carrier drops bomb")
+{
+	event
+	{
+		Player Died;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Event Player == Global Variable(BombCarrier);
+	}
+
+	actions
+	{
+		Stop Chasing Global Variable(BombLocation);
+		Set Global Variable(BombCarrier, Null);
+		Set Global Variable(BombPickedUp, False);
+		Small Message(All Players(All Teams), Custom String("Bomb Dropped", Null, Null, Null));
+	}
+}
+
+rule("Explode bomb")
+{
+	event
+	{
+		Subroutine;
+		ExplodeBomb;
+	}
+
+	actions
+	{
+		Set Global Variable(BombCountdown, Global Variable(BombTimer));
+		Create In-World Text(All Players(All Teams), Custom String("{0}", Round To Integer(Global Variable(BombCountdown), Up), Null,
+			Null), Vector(X Component Of(Global Variable(BombLocation)), Add(Y Component Of(Global Variable(BombTimer)), 1),
+			Z Component Of(Global Variable(BombLocation))), 15, Clip Against Surfaces, Visible To Position and String, Red,
+			Default Visibility);
+		Set Global Variable(BombCountdownText, Last Text ID);
+		Wait(Global Variable(BombTimer), Ignore Condition);
+		Destroy In-World Text(Global Variable(BombCountdownText));
+		Modify Team Score(Team Of(Event Player), 1);
+		Play Effect(All Players(All Teams), Bad Explosion, Orange, Global Variable(BombLocation), 20);
+		Kill(Filtered Array(All Players(All Teams), Compare(Distance Between(Position Of(Current Array Element), Global Variable(
+			BombLocation)), <=, 10)), Event Player);
+		Small Message(All Players(All Teams), Custom String("Bomb Detonated.", Null, Null, Null));
+		Wait(1.500, Ignore Condition);
+		Small Message(All Players(All Teams), Custom String("Round Over.", Null, Null, Null));
+		Wait(2, Ignore Condition);
+		Call Subroutine(StartGame);
+	}
+}
+
+rule("StartGame")
+{
+	event
+	{
+		Subroutine;
+		StartGame;
+	}
+
+	actions
+	{
+		Set Global Variable(BombLocation, Vector(0, 0.250, 0));
+		Set Global Variable(BombCarrier, Null);
+		Set Global Variable(BombPickedUp, False);
+		Set Global Variable(RespawnRequested, True);
+		Set Move Speed(All Players(All Teams), 0);
+		Small Message(All Players(All Teams), Custom String("Griffball.", Null, Null, Null));
+		Wait(1, Ignore Condition);
+		Small Message(All Players(All Teams), Custom String("3", Null, Null, Null));
+		Wait(1, Ignore Condition);
+		Small Message(All Players(All Teams), Custom String("2", Null, Null, Null));
+		Wait(1, Ignore Condition);
+		Small Message(All Players(All Teams), Custom String("1", Null, Null, Null));
+		Wait(1, Ignore Condition);
+		Small Message(All Players(All Teams), Custom String("0", Null, Null, Null));
+		Set Move Speed(All Players(All Teams), 100);
+	}
+}
+
+rule("Respawn requested - Team 1")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Global Variable(RespawnRequested) == True;
+	}
+
+	actions
+	{
+		Set Global Variable(RespawnRequested, False);
+		Resurrect(Event Player);
+		Teleport(Event Player, Vector(17, 0, Random Real(-20.000, 20)));
+		Set Facing(Event Player, Right, To World);
+	}
+}
+
+rule("Respawn requested - Team 2")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		All;
+	}
+
+	conditions
+	{
+		Global Variable(RespawnRequested) == True;
+	}
+
+	actions
+	{
+		Set Global Variable(RespawnRequested, False);
+		Resurrect(Event Player);
+		Teleport(Event Player, Vector(-17.000, 0, Random Real(-20.000, 20)));
+		Set Facing(Event Player, Right, To World);
 	}
 }
