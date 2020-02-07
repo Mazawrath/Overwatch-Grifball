@@ -95,6 +95,11 @@ rule("Create Effects")
 		Ongoing - Global;
 	}
 
+	conditions
+	{
+		Is Game In Progress == True;
+	}
+
 	actions
 	{
 		Create Effect(All Players(All Teams), Orb, Orange, Global Variable(BombLocation), 0.001, Visible To Position and Radius);
@@ -108,7 +113,25 @@ rule("Create Effects")
 	}
 }
 
-rule("Create HUD Elements")
+rule("Create Global HUD Elements")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Create HUD Text(All Players(All Teams), Null, Null, Custom String("Controls:", Null, Null, Null), Right, 1, White, White, White,
+			Visible To and String, Default Visibility);
+		Create HUD Text(All Players(All Teams), Null, Null, Custom String("Secondary Fire: Switch Weapons", Null, Null, Null), Right, 2,
+			White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(All Players(All Teams), Null, Null, Custom String("Reload: Pick up bomb", Null, Null, Null), Right, 3, White,
+			White, White, Visible To and String, Default Visibility);
+	}
+}
+
+rule("Create Local HUD Elements")
 {
 	event
 	{
@@ -221,12 +244,13 @@ rule("Torbjorn - Set player variables")
 	{
 		"This simulates the gravity hammer. Which has a longer cast time but more range."
 		Set Player Variable(Event Player, LungeEnabled, False);
-		Set Player Variable(Event Player, LungeStrength, 10);
-		Set Player Variable(Event Player, DistanceToAllowLunge, 8);
+		Set Player Variable(Event Player, LungeStrength, 14);
+		Set Player Variable(Event Player, DistanceToAllowLunge, 8.500);
 		"Apparently the custom game settings forget the genjis primary fire is disabled."
 		Set Primary Fire Enabled(Event Player, True);
 		Set Player Variable(Event Player, TimeSinceHammerUsed, 1);
-		Chase Player Variable At Rate(Event Player, TimeSinceHammerUsed, 1, 1, Destination and Rate);
+		Chase Player Variable At Rate(Event Player, TimeSinceHammerUsed, 20, 1, Destination and Rate);
+		Allow Button(Event Player, Jump);
 	}
 }
 
@@ -268,11 +292,17 @@ rule("Torbjorn - Lock hammer after swing")
 
 	actions
 	{
+		If(Player Variable(Event Player, PlayerInRange));
+			Call Subroutine(LungeAtPlayer);
+		End;
+		Set Player Variable(Event Player, TimeSinceHammerUsed, 0);
 		Set Player Variable(Event Player, ButtonIsHeld, True);
 		Set Primary Fire Enabled(Event Player, False);
 		Set Player Variable(Event Player, LungeEnabled, True);
 		Wait(0.001, Ignore Condition);
 		Set Player Variable(Event Player, LungeEnabled, False);
+		Wait(0.250, Ignore Condition);
+		Play Effect(All Players(All Teams), Debuff Impact Sound, White, Event Player, 40);
 	}
 }
 
@@ -289,12 +319,14 @@ rule("Torbjorn - Unlock hammer after swing")
 	{
 		Is Button Held(Event Player, Primary Fire) == False;
 		Player Variable(Event Player, ButtonIsHeld) == True;
+		Player Variable(Event Player, TimeSinceHammerUsed) >= 0.600;
 	}
 
 	actions
 	{
-		Set Player Variable(Event Player, ButtonIsHeld, False);
 		Set Primary Fire Enabled(Event Player, True);
+		disabled Wait(0.400, Ignore Condition);
+		Set Player Variable(Event Player, ButtonIsHeld, False);
 	}
 }
 
@@ -323,7 +355,8 @@ rule("Get player to target")
 			Set Player Variable(Event Player, PlayerTargeted, Vector(0, -20.000, 0));
 			Set Player Variable(Event Player, PlayerInRange, False);
 		End;
-		Set Player Variable(Event Player, InDistanceOfBomb, Compare(Distance Between(Event Player, Global Variable(BombLocation)), <=, 2));
+		Set Player Variable(Event Player, InDistanceOfBomb, Compare(Distance Between(Position Of(Event Player), Global Variable(
+			BombLocation)), <=, 2));
 		Wait(0.001, Ignore Condition);
 		Loop;
 	}
@@ -448,7 +481,7 @@ rule("Genji - Delay melee")
 	actions
 	{
 		"This delay is used to simulate the energy swords cast. Without this, Genji's cast is next to nothing and can kill Torb in every fight."
-		Wait(0.100, Ignore Condition);
+		Wait(0.145, Ignore Condition);
 		Allow Button(Event Player, Melee);
 		Start Holding Button(Event Player, Melee);
 		Wait(0.100, Ignore Condition);
@@ -479,7 +512,7 @@ rule("Genji - Trigger lunge")
 	}
 }
 
-rule("Torbjron - Trigger lunge")
+disabled rule("Torbjron - Trigger lunge")
 {
 	event
 	{
@@ -515,9 +548,9 @@ rule("Lunge at player")
 	{
 		If(Compare(Distance Between(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), >, 2.500));
 			If(Not(Is On Ground(Event Player)));
-				Apply Impulse(Event Player, Down, 1, To World, Cancel Contrary Motion);
-			Else;
-				Apply Impulse(Event Player, Up, 0.250, To World, Cancel Contrary Motion);
+				Apply Impulse(Event Player, Down, 1.500, To World, Cancel Contrary Motion);
+			disabled Else;
+				disabled Apply Impulse(Event Player, Up, 0.250, To World, Cancel Contrary Motion);
 			End;
 			Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), Subtract(
 				Player Variable(Event Player, LungeStrength), Y Component Of(Position Of(Event Player))), To World,
@@ -526,6 +559,7 @@ rule("Lunge at player")
 				To World, None);
 			Wait(0.250, Ignore Condition);
 			Stop Facing(Event Player);
+			Stop Forcing Throttle(Event Player);
 		End;
 	}
 }
@@ -559,6 +593,7 @@ rule("Pickup bomb")
 	{
 		Small Message(All Players(All Teams), Custom String("Bomb taken", Null, Null, Null));
 		Set Global Variable(BombCarrier, Event Player);
+		Set Global Variable(BombPickedUp, True);
 	}
 }
 
@@ -577,7 +612,8 @@ rule("Bomb follows carrier")
 
 	actions
 	{
-		Chase Global Variable At Rate(BombLocation, Eye Position(Global Variable(BombCarrier)), 6, Destination and Rate);
+		Chase Global Variable At Rate(BombLocation, World Vector Of(Multiply(Forward, 2), Global Variable(BombCarrier),
+			Rotation And Translation), 6, Destination and Rate);
 	}
 }
 
@@ -701,7 +737,7 @@ rule("Bomb Reaches Site - Team 2")
 	}
 }
 
-disabled rule("Bomb carrier drops bomb")
+rule("Bomb carrier dies")
 {
 	event
 	{
@@ -741,6 +777,7 @@ rule("Explode bomb")
 			Default Visibility);
 		Set Global Variable(BombCountdownText, Last Text ID);
 		Wait(Global Variable(BombTimer), Ignore Condition);
+		Play Effect(All Players(All Teams), Buff Impact Sound, White, Global Variable(BombLocation), 200);
 		Destroy In-World Text(Global Variable(BombCountdownText));
 		Modify Team Score(Team Of(Event Player), 1);
 		Play Effect(All Players(All Teams), Bad Explosion, Orange, Global Variable(BombLocation), 20);
@@ -799,8 +836,8 @@ rule("Respawn requested - Team 1")
 	actions
 	{
 		Set Global Variable(RespawnRequested, False);
-		Resurrect(Event Player);
 		Teleport(Event Player, Vector(17, 0, Random Real(-20.000, 20)));
+		Resurrect(Event Player);
 		Set Facing(Event Player, Right, To World);
 	}
 }
@@ -822,8 +859,8 @@ rule("Respawn requested - Team 2")
 	actions
 	{
 		Set Global Variable(RespawnRequested, False);
-		Resurrect(Event Player);
 		Teleport(Event Player, Vector(-17.000, 0, Random Real(-20.000, 20)));
+		Resurrect(Event Player);
 		Set Facing(Event Player, Right, To World);
 	}
 }
