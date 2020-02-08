@@ -17,16 +17,19 @@ settings
 	{
 		Team Deathmatch
 		{
+			enabled maps
+			{
+				Workshop Chamber
+			}
+		}
+
+		General
+		{
 			Allow Hero Switching: Off
 			Game Mode Start: Manual
 			Hero Limit: Off
 			Respawn Time Scalar: 25%
 			Score To Win: 7
-
-			enabled maps
-			{
-				Workshop Chamber
-			}
 		}
 	}
 
@@ -662,6 +665,7 @@ rule("Pickup bomb")
 		Global Variable(BombPickedUp) == False;
 		Is Button Held(Event Player, Reload) == True;
 		Is Game In Progress == True;
+		Player Variable(Event Player, TimeSinceReloadHeld) >= 1;
 	}
 
 	actions
@@ -670,6 +674,7 @@ rule("Pickup bomb")
 		Set Global Variable(BombCarrier, Event Player);
 		Set Global Variable(BombPickedUp, True);
 		Set Player Variable(Event Player, ReloadButtonIsHeld, True);
+		Set Player Variable(Event Player, TimeSinceReloadHeld, 0);
 	}
 }
 
