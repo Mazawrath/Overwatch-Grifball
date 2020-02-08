@@ -213,7 +213,7 @@ rule("Create Local HUD Elements")
 
 	actions
 	{
-		Create HUD Text(Filtered Array(All Players(All Teams), And(Not(Global Variable(BombPickedUp)), Player Variable(
+		disabled Create HUD Text(Filtered Array(All Players(All Teams), And(Not(Global Variable(BombPickedUp)), Player Variable(
 			Current Array Element, InDistanceOfBomb))), Custom String("Hold Reload to pick up bomb", Null, Null, Null), Null, Null, Left,
 			2, White, White, White, Visible To and String, Default Visibility);
 		Create HUD Text(Filtered Array(All Players(All Teams), Compare(Current Array Element, ==, Global Variable(BombCarrier))),
@@ -689,9 +689,9 @@ rule("Pickup bomb")
 	{
 		Player Variable(Event Player, InDistanceOfBomb) == True;
 		Global Variable(BombPickedUp) == False;
-		Is Button Held(Event Player, Reload) == True;
+		disabled Is Button Held(Event Player, Reload) == True;
 		Is Game In Progress == True;
-		Player Variable(Event Player, TimeSinceReloadHeld) >= 1;
+		Player Variable(Event Player, TimeSinceReloadHeld) >= 2;
 	}
 
 	actions
