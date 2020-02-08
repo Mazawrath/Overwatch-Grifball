@@ -615,6 +615,28 @@ rule("Pickup bomb")
 		Small Message(All Players(All Teams), Custom String("Bomb taken", Null, Null, Null));
 		Set Global Variable(BombCarrier, Event Player);
 		Set Global Variable(BombPickedUp, True);
+		Set Player Variable(Event Player, ReloadButtonIsHeld, True);
+	}
+}
+
+rule("Reload button let go")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Reload) == False;
+		Player Variable(Event Player, ReloadButtonIsHeld) == True;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, ReloadButtonIsHeld, False);
 	}
 }
 
@@ -633,8 +655,8 @@ rule("Bomb follows carrier")
 
 	actions
 	{
-		Chase Global Variable At Rate(BombLocation, World Vector Of(Multiply(Forward, 2), Global Variable(BombCarrier),
-			Rotation And Translation), 6, Destination and Rate);
+		Chase Global Variable At Rate(BombLocation, World Vector Of(Multiply(Forward, 1), Global Variable(BombCarrier),
+			Rotation And Translation), 100, Destination and Rate);
 	}
 }
 
@@ -643,6 +665,12 @@ rule("// DEV TOOLS")
 	event
 	{
 		Ongoing - Global;
+	}
+
+	actions
+	{
+		Create HUD Text(All Players(All Teams), Null, Custom String("Created by u/Mazawrath", Null, Null, Null), Null, Left, 0, White,
+			White, White, Visible To and String, Default Visibility);
 	}
 }
 
