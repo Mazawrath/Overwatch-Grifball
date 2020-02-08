@@ -88,9 +88,11 @@ variables
 		6: HeroSwapCooldown
 		7: InDistanceOfBomb
 		8: PrimaryButtonIsHeld
-		9: TimeSinceHammerUsed
+		9: TimeSinceWeaponUsed
 		10: ReloadButtonIsHeld
 		11: TimeSinceReloadHeld
+		12: UpwardsImpluseHeight
+		13: IsLunging
 }
 
 subroutines
@@ -319,13 +321,15 @@ rule("Torbjorn - Set player variables")
 	{
 		"This simulates the gravity hammer. Which has a longer cast time but more range."
 		Set Player Variable(Event Player, LungeEnabled, False);
-		Set Player Variable(Event Player, LungeStrength, 12);
-		Set Player Variable(Event Player, DistanceToAllowLunge, 7);
+		Set Player Variable(Event Player, LungeStrength, 17);
+		Set Player Variable(Event Player, DistanceToAllowLunge, 8);
+		Set Player Variable(Event Player, UpwardsImpluseHeight, 8);
 		"Apparently the custom game settings forget the genjis primary fire is disabled."
 		Set Primary Fire Enabled(Event Player, True);
-		Set Player Variable(Event Player, TimeSinceHammerUsed, 1);
-		Chase Player Variable At Rate(Event Player, TimeSinceHammerUsed, 20, 1, Destination and Rate);
+		Set Player Variable(Event Player, TimeSinceWeaponUsed, 1);
+		Chase Player Variable At Rate(Event Player, TimeSinceWeaponUsed, 20, 1, Destination and Rate);
 		Allow Button(Event Player, Jump);
+		Set Damage Dealt(Event Player, 100);
 	}
 }
 
@@ -341,9 +345,10 @@ rule("Genji - Set player variables")
 	actions
 	{
 		"This simulates the energy sword. Less cast time but less range."
-		Set Player Variable(Event Player, LungeEnabled, True);
-		Set Player Variable(Event Player, LungeStrength, 12);
-		Set Player Variable(Event Player, DistanceToAllowLunge, 5);
+		Set Player Variable(Event Player, LungeEnabled, False);
+		Set Player Variable(Event Player, LungeStrength, 15);
+		Set Player Variable(Event Player, DistanceToAllowLunge, 7);
+		Set Player Variable(Event Player, UpwardsImpluseHeight, 2);
 		Disallow Button(Event Player, Melee);
 		"Apparently the custom game settings forget the genjis primary fire is disabled."
 		Set Primary Fire Enabled(Event Player, False);
@@ -362,7 +367,8 @@ rule("Torbjorn - Lock hammer after swing")
 	conditions
 	{
 		Is Button Held(Event Player, Primary Fire) == True;
-		Player Variable(Event Player, ButtonIsHeld) == False;
+		Player Variable(Event Player, PrimaryButtonIsHeld) == False;
+		Is Alive(Event Player) == True;
 	}
 
 	actions
@@ -370,8 +376,8 @@ rule("Torbjorn - Lock hammer after swing")
 		If(Player Variable(Event Player, PlayerInRange));
 			Call Subroutine(LungeAtPlayer);
 		End;
-		Set Player Variable(Event Player, TimeSinceHammerUsed, 0);
-		Set Player Variable(Event Player, ButtonIsHeld, True);
+		Set Player Variable(Event Player, TimeSinceWeaponUsed, 0);
+		Set Player Variable(Event Player, PrimaryButtonIsHeld, True);
 		Set Primary Fire Enabled(Event Player, False);
 		Set Player Variable(Event Player, LungeEnabled, True);
 		Wait(0.001, Ignore Condition);
@@ -393,15 +399,15 @@ rule("Torbjorn - Unlock hammer after swing")
 	conditions
 	{
 		Is Button Held(Event Player, Primary Fire) == False;
-		Player Variable(Event Player, ButtonIsHeld) == True;
-		Player Variable(Event Player, TimeSinceHammerUsed) >= 0.600;
+		Player Variable(Event Player, PrimaryButtonIsHeld) == True;
+		Player Variable(Event Player, TimeSinceWeaponUsed) >= 0.600;
 	}
 
 	actions
 	{
 		Set Primary Fire Enabled(Event Player, True);
 		disabled Wait(0.400, Ignore Condition);
-		Set Player Variable(Event Player, ButtonIsHeld, False);
+		Set Player Variable(Event Player, PrimaryButtonIsHeld, False);
 	}
 }
 
@@ -465,6 +471,7 @@ rule("Swap heroes on secondary fire")
 	{
 		Is Button Held(Event Player, Secondary Fire) == True;
 		Player Variable(Event Player, HeroSwapCooldown) == 0;
+		Player Variable(Event Player, IsLunging) == False;
 	}
 
 	actions
@@ -555,11 +562,13 @@ rule("Genji - Delay melee")
 
 	actions
 	{
+		Set Player Variable(Event Player, LungeEnabled, True);
 		"This delay is used to simulate the energy swords cast. Without this, Genji's cast is next to nothing and can kill Torb in every fight."
-		Wait(0.145, Ignore Condition);
+		Wait(0.300, Ignore Condition);
+		Set Player Variable(Event Player, LungeEnabled, False);
 		Allow Button(Event Player, Melee);
 		Start Holding Button(Event Player, Melee);
-		Wait(0.100, Ignore Condition);
+		Wait(0.050, Ignore Condition);
 		Stop Holding Button(Event Player, Melee);
 		Disallow Button(Event Player, Melee);
 	}
@@ -597,21 +606,30 @@ rule("Lunge at player")
 
 	actions
 	{
+		Set Player Variable(Event Player, IsLunging, True);
 		If(Compare(Distance Between(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), >, 2.500));
-			If(Not(Is On Ground(Event Player)));
-				Apply Impulse(Event Player, Down, 1.500, To World, Cancel Contrary Motion);
-			disabled Else;
-				disabled Apply Impulse(Event Player, Up, 0.250, To World, Cancel Contrary Motion);
+			Start Forcing Throttle(Event Player, 0, 1, 0, 0, 0, 0);
+			If(Is On Ground(Event Player));
+				Apply Impulse(Event Player, Up, Player Variable(Event Player, UpwardsImpluseHeight), To World, Incorporate Contrary Motion);
 			End;
-			Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), Subtract(
-				Player Variable(Event Player, LungeStrength), Y Component Of(Position Of(Event Player))), To World,
-				Incorporate Contrary Motion);
-			Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 100,
-				To World, None);
-			Wait(0.250, Ignore Condition);
+			If(Compare(Hero Of(Event Player), ==, Hero(Genji)));
+				Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)),
+					Player Variable(Event Player, LungeStrength), To World, Cancel Contrary Motion);
+			Else;
+				Apply Impulse(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)),
+					Player Variable(Event Player, LungeStrength), To World, Cancel Contrary Motion);
+			End;
+			Wait(0.050, Ignore Condition);
+			If(And(Compare(Hero Of(Event Player), ==, Hero(Torbjörn)), Not(Is On Ground(Event Player))));
+				Apply Impulse(Event Player, Down, 0.750, To World, Cancel Contrary Motion);
+			End;
+			Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 85,
+				To World, Direction and Turn Rate);
+			Wait(0.205, Ignore Condition);
 			Stop Facing(Event Player);
 			Stop Forcing Throttle(Event Player);
 		End;
+		Set Player Variable(Event Player, IsLunging, False);
 	}
 }
 
