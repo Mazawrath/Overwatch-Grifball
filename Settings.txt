@@ -808,7 +808,7 @@ rule("Bomb Reaches Site - Team 1")
 		Set Global Variable(BombCarrier, Null);
 		Set Global Variable(BombLocation, Vector(-17.000, 0.250, 0));
 		Small Message(All Players(All Teams), Custom String("Bomb Armed", Null, Null, Null));
-		Call Subroutine(ExplodeBomb);
+		Start Rule(StartGame, Do Nothing);
 	}
 }
 
@@ -834,7 +834,7 @@ rule("Bomb Reaches Site - Team 2")
 		Set Global Variable(BombCarrier, Null);
 		Set Global Variable(BombLocation, Vector(17, 0.250, 0));
 		Small Message(All Players(All Teams), Custom String("Bomb Armed", Null, Null, Null));
-		Call Subroutine(ExplodeBomb);
+		Start Rule(StartGame, Do Nothing);
 	}
 }
 
@@ -940,21 +940,28 @@ rule("StartGame")
 
 	actions
 	{
+		Disallow Button(All Players(All Teams), Jump);
+		Set Move Speed(All Players(All Teams), 0);
 		Set Global Variable(BombLocation, Vector(0, 0.250, 0));
 		Set Global Variable(BombCarrier, Null);
 		Set Global Variable(BombPickedUp, False);
 		Set Global Variable(RespawnRequested, True);
-		Set Move Speed(All Players(All Teams), 0);
+		Wait(0.250, Ignore Condition);
+		Set Global Variable(RespawnRequested, False);
 		Small Message(All Players(All Teams), Custom String("Griffball.", Null, Null, Null));
 		Wait(1, Ignore Condition);
 		Small Message(All Players(All Teams), Custom String("3", Null, Null, Null));
+		Play Effect(All Players(All Teams), Explosion Sound, White, 0, 200);
 		Wait(1, Ignore Condition);
 		Small Message(All Players(All Teams), Custom String("2", Null, Null, Null));
+		Play Effect(All Players(All Teams), Explosion Sound, White, 0, 200);
 		Wait(1, Ignore Condition);
 		Small Message(All Players(All Teams), Custom String("1", Null, Null, Null));
+		Play Effect(All Players(All Teams), Explosion Sound, White, 0, 200);
 		Wait(1, Ignore Condition);
-		Small Message(All Players(All Teams), Custom String("0", Null, Null, Null));
 		Set Move Speed(All Players(All Teams), 100);
+		Allow Button(All Players(All Teams), Jump);
+		Play Effect(All Players(All Teams), Ring Explosion Sound, White, 0, 200);
 	}
 }
 
