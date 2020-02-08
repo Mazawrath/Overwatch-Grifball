@@ -438,7 +438,7 @@ rule("Get player to target")
 				Event Player), Eye Position(Current Array Element)))))));
 			Set Player Variable(Event Player, PlayerInRange, True);
 		Else;
-			Set Player Variable(Event Player, PlayerTargeted, Vector(0, -20.000, 0));
+			disabled Set Player Variable(Event Player, PlayerTargeted, Vector(0, -20.000, 0));
 			Set Player Variable(Event Player, PlayerInRange, False);
 		End;
 		Set Player Variable(Event Player, InDistanceOfBomb, Compare(Distance Between(Position Of(Event Player), Global Variable(
@@ -459,7 +459,8 @@ rule("Create target particle")
 
 	actions
 	{
-		Create Effect(Event Player, Bad Aura, Red, Player Variable(Event Player, PlayerTargeted), 1, Position and Radius);
+		Create Effect(Filtered Array(Event Player, Player Variable(Event Player, PlayerInRange)), Bad Aura, Red, Player Variable(
+			Event Player, PlayerTargeted), 1, Visible To Position and Radius);
 	}
 }
 
@@ -614,21 +615,22 @@ rule("Lunge at player")
 		Set Player Variable(Event Player, IsLunging, True);
 		Set Player Variable(Event Player, LungeTime, 0);
 		If(Compare(Distance Between(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), >, 2.500));
-			Start Forcing Throttle(Event Player, 0, 1, 0, 0, 0, 0);
+			Start Forcing Throttle(Event Player, 1, 1, 0, 0, 0, 0);
 			If(Is On Ground(Event Player));
 				Apply Impulse(Event Player, Up, Player Variable(Event Player, UpwardsImpluseHeight), To World, Incorporate Contrary Motion);
 			End;
-			Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 85,
+			Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 90,
 				To World, Direction and Turn Rate);
-			While(Compare(Player Variable(Event Player, LungeTime), <=, 0.500));
+			While(And(Compare(Player Variable(Event Player, LungeTime), <=, 0.500), Compare(Distance Between(Eye Position(Event Player),
+				Player Variable(Event Player, PlayerTargeted)), >, 0)));
 				If(Compare(Hero Of(Event Player), ==, Hero(Genji)));
-					Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), 15,
+					Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), 13.500,
 						To World, Cancel Contrary Motion);
 				Else;
-					Apply Impulse(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 15,
+					Apply Impulse(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 13.500,
 						To World, Cancel Contrary Motion);
 				End;
-				Wait(0.005, Ignore Condition);
+				Wait(0.001, Ignore Condition);
 			End;
 			Apply Impulse(Event Player, Down, 0.500, To World, Cancel Contrary Motion);
 			Stop Facing(Event Player);
@@ -650,6 +652,7 @@ rule("Player killed someone")
 	actions
 	{
 		Set Player Variable(Event Player, LungeTime, 10);
+		Stop Facing(Event Player);
 	}
 }
 
