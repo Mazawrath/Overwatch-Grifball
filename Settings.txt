@@ -95,6 +95,25 @@ rule("Create Effects")
 		Ongoing - Global;
 	}
 
+	actions
+	{
+		Create Effect(All Players(All Teams), Ring, White, 0, 1, Visible To Position and Radius);
+		Create Effect(All Players(All Teams), Ring, Team 1, Vector(17, 1, 0), 1, Visible To Position and Radius);
+		Create Effect(All Players(All Teams), Ring, Team 2, Vector(-17.000, 1, 0), 1, Visible To Position and Radius);
+		Create Effect(Filtered Array(All Players(Team 1), Compare(Current Array Element, ==, Global Variable(BombCarrier))), Light Shaft,
+			Team 2, Vector(-17.000, 0, 0), 1, Visible To Position and Radius);
+		Create Effect(Filtered Array(All Players(Team 2), Compare(Current Array Element, ==, Global Variable(BombCarrier))), Light Shaft,
+			Team 1, Vector(17, 0, 0), 1, Visible To Position and Radius);
+	}
+}
+
+rule("Ball spawns on match start")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
 	conditions
 	{
 		Is Game In Progress == True;
@@ -103,13 +122,6 @@ rule("Create Effects")
 	actions
 	{
 		Create Effect(All Players(All Teams), Orb, Orange, Global Variable(BombLocation), 0.001, Visible To Position and Radius);
-		Create Effect(All Players(All Teams), Ring, White, 0, 1, Visible To Position and Radius);
-		Create Effect(All Players(All Teams), Ring, Team 1, Vector(17, 1, 0), 1, Visible To Position and Radius);
-		Create Effect(All Players(All Teams), Ring, Team 2, Vector(-17.000, 1, 0), 1, Visible To Position and Radius);
-		Create Effect(Filtered Array(All Players(Team 1), Compare(Current Array Element, ==, Global Variable(BombCarrier))), Light Shaft,
-			Team 2, Vector(-17.000, 0, 0), 1, Visible To Position and Radius);
-		Create Effect(Filtered Array(All Players(Team 2), Compare(Current Array Element, ==, Global Variable(BombCarrier))), Light Shaft,
-			Team 1, Vector(17, 0, 0), 1, Visible To Position and Radius);
 	}
 }
 
