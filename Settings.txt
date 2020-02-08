@@ -265,8 +265,8 @@ rule("Torbjorn - Set player variables")
 	{
 		"This simulates the gravity hammer. Which has a longer cast time but more range."
 		Set Player Variable(Event Player, LungeEnabled, False);
-		Set Player Variable(Event Player, LungeStrength, 14);
-		Set Player Variable(Event Player, DistanceToAllowLunge, 8.500);
+		Set Player Variable(Event Player, LungeStrength, 12);
+		Set Player Variable(Event Player, DistanceToAllowLunge, 7);
 		"Apparently the custom game settings forget the genjis primary fire is disabled."
 		Set Primary Fire Enabled(Event Player, True);
 		Set Player Variable(Event Player, TimeSinceHammerUsed, 1);
@@ -288,8 +288,8 @@ rule("Genji - Set player variables")
 	{
 		"This simulates the energy sword. Less cast time but less range."
 		Set Player Variable(Event Player, LungeEnabled, True);
-		Set Player Variable(Event Player, LungeStrength, 11);
-		Set Player Variable(Event Player, DistanceToAllowLunge, 4.750);
+		Set Player Variable(Event Player, LungeStrength, 12);
+		Set Player Variable(Event Player, DistanceToAllowLunge, 5);
 		Disallow Button(Event Player, Melee);
 		"Apparently the custom game settings forget the genjis primary fire is disabled."
 		Set Primary Fire Enabled(Event Player, False);
