@@ -189,7 +189,11 @@ rule("Spawn team 1")
 
 	actions
 	{
-		Teleport(Event Player, Vector(17, 0, Random Real(-20.000, 20)));
+		If(Compare(Random Integer(0, 1), ==, 0));
+			Teleport(Event Player, Vector(17, 0, Random Real(5, 18)));
+		Else;
+			Teleport(Event Player, Vector(17, 0, Random Real(-5.000, -18.000)));
+		End;
 		Set Facing(Event Player, Right, To World);
 	}
 }
@@ -211,7 +215,11 @@ rule("Spawn team 2")
 
 	actions
 	{
-		Teleport(Event Player, Vector(-17.000, 0, Random Real(-20.000, 20)));
+		If(Compare(Random Integer(0, 1), ==, 0));
+			Teleport(Event Player, Vector(-17.000, 0, Random Real(5, 18)));
+		Else;
+			Teleport(Event Player, Vector(-17.000, 0, Random Real(-5.000, -18.000)));
+		End;
 		Set Facing(Event Player, Left, To World);
 	}
 }
@@ -920,8 +928,11 @@ rule("Respawn requested - Team 1")
 
 	actions
 	{
-		Set Global Variable(RespawnRequested, False);
-		Teleport(Event Player, Vector(17, 0, Random Real(-20.000, 20)));
+		If(Compare(Random Integer(0, 1), ==, 0));
+			Teleport(Event Player, Vector(17, 0, Random Real(5, 18)));
+		Else;
+			Teleport(Event Player, Vector(17, 0, Random Real(-5.000, -18.000)));
+		End;
 		Resurrect(Event Player);
 		Set Facing(Event Player, Right, To World);
 	}
@@ -943,11 +954,16 @@ rule("Respawn requested - Team 2")
 
 	actions
 	{
-		Set Global Variable(RespawnRequested, False);
-		Teleport(Event Player, Vector(-17.000, 0, Random Real(-20.000, 20)));
+		If(Compare(Random Integer(0, 1), ==, 0));
+			Teleport(Event Player, Vector(-17.000, 0, Random Real(5, 18)));
+		Else;
+			Teleport(Event Player, Vector(-17.000, 0, Random Real(-5.000, -18.000)));
+		End;
 		Resurrect(Event Player);
 		Set Facing(Event Player, Right, To World);
 	}
+}
+
 disabled rule("Reset bomb")
 {
 	event
