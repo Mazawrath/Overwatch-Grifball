@@ -83,8 +83,10 @@ variables
 		5: LungeStrength
 		6: HeroSwapCooldown
 		7: InDistanceOfBomb
-		8: ButtonIsHeld
+		8: PrimaryButtonIsHeld
 		9: TimeSinceHammerUsed
+		10: ReloadButtonIsHeld
+		11: TimeSinceReloadHeld
 }
 
 subroutines
@@ -92,6 +94,7 @@ subroutines
 	0: LungeAtPlayer
 	1: ExplodeBomb
 	2: StartGame
+	3: DropBomb
 }
 
 rule("Create Effects")
@@ -721,7 +724,6 @@ rule("Bomb Reaches Site - Team 1")
 	{
 		Stop Chasing Global Variable(BombLocation);
 		Set Global Variable(BombCarrier, Null);
-		Set Global Variable(BombPickedUp, False);
 		Set Global Variable(BombLocation, Vector(-17.000, 0.250, 0));
 		Small Message(All Players(All Teams), Custom String("Bomb Armed", Null, Null, Null));
 		Call Subroutine(ExplodeBomb);
@@ -748,10 +750,32 @@ rule("Bomb Reaches Site - Team 2")
 	{
 		Stop Chasing Global Variable(BombLocation);
 		Set Global Variable(BombCarrier, Null);
-		Set Global Variable(BombPickedUp, False);
 		Set Global Variable(BombLocation, Vector(17, 0.250, 0));
 		Small Message(All Players(All Teams), Custom String("Bomb Armed", Null, Null, Null));
 		Call Subroutine(ExplodeBomb);
+	}
+}
+
+rule("Bomb carrier drops bomb")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Event Player == Global Variable(BombCarrier);
+		Is Button Held(Event Player, Reload) == True;
+		Is Game In Progress == True;
+		Player Variable(Event Player, ReloadButtonIsHeld) == False;
+	}
+
+	actions
+	{
+		Call Subroutine(DropBomb);
 	}
 }
 
@@ -771,10 +795,25 @@ rule("Bomb carrier dies")
 
 	actions
 	{
+		Call Subroutine(DropBomb);
+	}
+}
+
+rule("Drop bomb")
+{
+	event
+	{
+		Subroutine;
+		DropBomb;
+	}
+
+	actions
+	{
 		Stop Chasing Global Variable(BombLocation);
 		Set Global Variable(BombCarrier, Null);
-		Set Global Variable(BombPickedUp, False);
 		Small Message(All Players(All Teams), Custom String("Bomb Dropped", Null, Null, Null));
+		Wait(0.250, Ignore Condition);
+		Set Global Variable(BombPickedUp, False);
 	}
 }
 
@@ -880,5 +919,26 @@ rule("Respawn requested - Team 2")
 		Teleport(Event Player, Vector(-17.000, 0, Random Real(-20.000, 20)));
 		Resurrect(Event Player);
 		Set Facing(Event Player, Right, To World);
+	}
+disabled rule("Reset bomb")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Y Component Of(Global Variable(BombLocation)) < 0;
+		Global Variable(BombPickedUp) == False;
+	}
+
+	actions
+	{
+		Set Global Variable(BombLocation, Vector(0, 0.250, 0));
+		Set Global Variable(BombCarrier, Null);
+		Set Global Variable(BombPickedUp, False);
+		Small Message(All Players(All Teams), Custom String("Bomb Reset.", Null, Null, Null));
 	}
 }
