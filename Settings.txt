@@ -566,16 +566,19 @@ rule("Genji - Delay melee")
 	conditions
 	{
 		Is Button Held(Event Player, Melee) == True;
+		Is Alive(Event Player) == True;
 	}
 
 	actions
 	{
+		Play Effect(Event Player, Buff Impact Sound, White, Event Player, 100);
 		Set Player Variable(Event Player, LungeEnabled, True);
 		"This delay is used to simulate the energy swords cast. Without this, Genji's cast is next to nothing and can kill Torb in every fight."
-		Wait(0.300, Ignore Condition);
+		Wait(0.280, Ignore Condition);
 		Set Player Variable(Event Player, LungeEnabled, False);
 		Allow Button(Event Player, Melee);
 		Start Holding Button(Event Player, Melee);
+		Play Effect(Event Player, Explosion Sound, White, Event Player, 40);
 		Wait(0.050, Ignore Condition);
 		Stop Holding Button(Event Player, Melee);
 		Disallow Button(Event Player, Melee);
