@@ -96,6 +96,7 @@ variables
 		11: TimeSinceReloadHeld
 		12: UpwardsImpluseHeight
 		13: IsLunging
+		14: LungeTime
 }
 
 subroutines
@@ -308,6 +309,7 @@ rule("Set player variables")
 		Preload Hero(Event Player, Hero(Torbjörn));
 		Set Player Variable(Event Player, ReloadButtonIsHeld, 0);
 		Chase Player Variable At Rate(Event Player, TimeSinceReloadHeld, 5, 1, Destination and Rate);
+		Chase Player Variable At Rate(Event Player, LungeTime, 10, 1, Destination and Rate);
 	}
 }
 
@@ -610,29 +612,44 @@ rule("Lunge at player")
 	actions
 	{
 		Set Player Variable(Event Player, IsLunging, True);
+		Set Player Variable(Event Player, LungeTime, 0);
 		If(Compare(Distance Between(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), >, 2.500));
 			Start Forcing Throttle(Event Player, 0, 1, 0, 0, 0, 0);
 			If(Is On Ground(Event Player));
 				Apply Impulse(Event Player, Up, Player Variable(Event Player, UpwardsImpluseHeight), To World, Incorporate Contrary Motion);
 			End;
-			If(Compare(Hero Of(Event Player), ==, Hero(Genji)));
-				Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)),
-					Player Variable(Event Player, LungeStrength), To World, Cancel Contrary Motion);
-			Else;
-				Apply Impulse(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)),
-					Player Variable(Event Player, LungeStrength), To World, Cancel Contrary Motion);
-			End;
-			Wait(0.050, Ignore Condition);
-			If(And(Compare(Hero Of(Event Player), ==, Hero(Torbjörn)), Not(Is On Ground(Event Player))));
-				Apply Impulse(Event Player, Down, 0.750, To World, Cancel Contrary Motion);
-			End;
 			Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 85,
 				To World, Direction and Turn Rate);
-			Wait(0.205, Ignore Condition);
+			While(Compare(Player Variable(Event Player, LungeTime), <=, 0.500));
+				If(Compare(Hero Of(Event Player), ==, Hero(Genji)));
+					Apply Impulse(Event Player, Direction Towards(Position Of(Event Player), Player Variable(Event Player, PlayerTargeted)), 15,
+						To World, Cancel Contrary Motion);
+				Else;
+					Apply Impulse(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 15,
+						To World, Cancel Contrary Motion);
+				End;
+				Wait(0.005, Ignore Condition);
+			End;
+			Apply Impulse(Event Player, Down, 0.500, To World, Cancel Contrary Motion);
 			Stop Facing(Event Player);
 			Stop Forcing Throttle(Event Player);
 		End;
 		Set Player Variable(Event Player, IsLunging, False);
+	}
+}
+
+rule("Player killed someone")
+{
+	event
+	{
+		Player Dealt Final Blow;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Set Player Variable(Event Player, LungeTime, 10);
 	}
 }
 
