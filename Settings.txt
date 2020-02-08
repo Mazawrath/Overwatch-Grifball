@@ -1039,3 +1039,21 @@ disabled rule("Reset bomb")
 		Small Message(All Players(All Teams), Custom String("Bomb Reset.", Null, Null, Null));
 	}
 }
+
+rule("Rule 43")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		disabled Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Set Slow Motion(90);
+	}
+}
