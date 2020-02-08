@@ -1,7 +1,14 @@
 settings
 {
+	main
+	{
+		Description: "CREATED BY U/MAZAWRATH. **ANY CONTENT IN THIS GAME IS CONSIDERED CONFIDENTIAL AND IS NOT INTENDED FOR PUBLIC PLAY**"
+	}
+
 	lobby
 	{
+		Allow Players Who Are In Queue: Yes
+		Match Voice Chat: Enabled
 		Max Team 1 Players: 4
 		Max Team 2 Players: 4
 	}
@@ -10,19 +17,16 @@ settings
 	{
 		Team Deathmatch
 		{
-			enabled maps
-			{
-				Workshop Chamber
-			}
-		}
-
-		General
-		{
 			Allow Hero Switching: Off
 			Game Mode Start: Manual
 			Hero Limit: Off
 			Respawn Time Scalar: 25%
 			Score To Win: 7
+
+			enabled maps
+			{
+				Workshop Chamber
+			}
 		}
 	}
 
@@ -116,6 +120,24 @@ rule("Create Effects")
 	}
 }
 
+rule("Run StartGame on game start")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Start Rule(StartGame, Restart Rule);
+	}
+}
+
 rule("Ball spawns on match start")
 {
 	event
@@ -134,6 +156,25 @@ rule("Ball spawns on match start")
 	}
 }
 
+rule("Reset hero selection on match start")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Assembling Heroes == True;
+	}
+
+	actions
+	{
+		Stop Forcing Player To Be Hero(All Players(All Teams));
+		Set Match Time(10);
+	}
+}
+
 rule("Create Global HUD Elements")
 {
 	event
@@ -147,7 +188,7 @@ rule("Create Global HUD Elements")
 			Visible To and String, Default Visibility);
 		Create HUD Text(All Players(All Teams), Null, Null, Custom String("Secondary Fire: Switch Weapons", Null, Null, Null), Right, 2,
 			White, White, White, Visible To and String, Default Visibility);
-		Create HUD Text(All Players(All Teams), Null, Null, Custom String("Reload: Pick up bomb", Null, Null, Null), Right, 3, White,
+		Create HUD Text(All Players(All Teams), Null, Null, Custom String("Reload: Pick-up/drop bomb", Null, Null, Null), Right, 3, White,
 			White, White, Visible To and String, Default Visibility);
 	}
 }
@@ -168,7 +209,10 @@ rule("Create Local HUD Elements")
 	{
 		Create HUD Text(Filtered Array(All Players(All Teams), And(Not(Global Variable(BombPickedUp)), Player Variable(
 			Current Array Element, InDistanceOfBomb))), Custom String("Hold Reload to pick up bomb", Null, Null, Null), Null, Null, Left,
-			0, White, White, White, Visible To and String, Default Visibility);
+			2, White, White, White, Visible To and String, Default Visibility);
+		Create HUD Text(Filtered Array(All Players(All Teams), Compare(Current Array Element, ==, Global Variable(BombCarrier))),
+			Custom String("Hold Reload to drop bomb", Null, Null, Null), Null, Null, Left, 2, White, White, White, Visible To and String,
+			Default Visibility);
 	}
 }
 
@@ -257,6 +301,8 @@ rule("Set player variables")
 		Chase Player Variable At Rate(Event Player, HeroSwapCooldown, 0, 1, Destination and Rate);
 		Preload Hero(Event Player, Hero(Genji));
 		Preload Hero(Event Player, Hero(Torbjörn));
+		Set Player Variable(Event Player, ReloadButtonIsHeld, 0);
+		Chase Player Variable At Rate(Event Player, TimeSinceReloadHeld, 5, 1, Destination and Rate);
 	}
 }
 
@@ -541,30 +587,6 @@ rule("Genji - Trigger lunge")
 	}
 }
 
-disabled rule("Torbjron - Trigger lunge")
-{
-	event
-	{
-		Ongoing - Each Player;
-		All;
-		Torbjörn;
-	}
-
-	conditions
-	{
-		Is Button Held(Event Player, Primary Fire) == True;
-		Player Variable(Event Player, PlayerInRange) == True;
-		Player Variable(Event Player, LungeEnabled) == True;
-		disabled Player Variable(Event Player, ButtonIsHeld) == False;
-		disabled Is Firing Primary(Event Player) == True;
-	}
-
-	actions
-	{
-		Call Subroutine(LungeAtPlayer);
-	}
-}
-
 rule("Lunge at player")
 {
 	event
@@ -598,6 +620,12 @@ rule("// GRIFBALL RULES")
 	event
 	{
 		Ongoing - Global;
+	}
+
+	actions
+	{
+		Create HUD Text(All Players(All Teams), Custom String("INTERNAL BETA: DO NOT PLAY PUBLICLY", Null, Null, Null), Null, Null, Left,
+			1, Red, White, White, Visible To and String, Default Visibility);
 	}
 }
 
