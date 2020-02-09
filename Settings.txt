@@ -83,7 +83,7 @@ variables
 		9: RespawnRequested
 
 	player:
-		1: PlayerTargeted
+		1: PlayerTargetedCords
 		2: PlayerInRange
 		3: LungeEnabled
 		4: DistanceToAllowLunge
@@ -97,6 +97,7 @@ variables
 		12: UpwardsImpluseHeight
 		13: IsLunging
 		14: LungeTime
+		15: PlayerTargeted
 }
 
 subroutines
@@ -359,6 +360,8 @@ rule("Genji - Set player variables")
 		Disallow Button(Event Player, Melee);
 		"Apparently the custom game settings forget the genjis primary fire is disabled."
 		Set Primary Fire Enabled(Event Player, False);
+		Set Player Variable(Event Player, TimeSinceWeaponUsed, 5);
+		Chase Player Variable At Rate(Event Player, TimeSinceWeaponUsed, 20, 1, Destination and Rate);
 	}
 }
 
@@ -434,15 +437,20 @@ rule("Get player to target")
 			Global Variable(ViewAngle)), Compare(Distance Between(Event Player, Current Array Element), <=, Player Variable(Event Player,
 			DistanceToAllowLunge))), Is Alive(Current Array Element))), >=, 1));
 			If(Not(Player Variable(Event Player, IsLunging)));
-				Set Player Variable(Event Player, PlayerTargeted, Eye Position(First Of(Sorted Array(Filtered Array(Filtered Array(
+				Set Player Variable(Event Player, PlayerTargetedCords, Eye Position(First Of(Sorted Array(Filtered Array(Filtered Array(
 					All Living Players(Opposite Team Of(Team Of(Event Player))), Compare(Distance Between(Event Player, Current Array Element), <=,
 					Player Variable(Event Player, DistanceToAllowLunge))), Is In View Angle(Event Player, Position Of(Current Array Element),
 					Global Variable(ViewAngle))), Angle Between Vectors(Facing Direction Of(Event Player), Direction Towards(Eye Position(
 					Event Player), Eye Position(Current Array Element)))))));
+				Set Player Variable(Event Player, PlayerTargeted, First Of(Sorted Array(Filtered Array(Filtered Array(All Living Players(
+					Opposite Team Of(Team Of(Event Player))), Compare(Distance Between(Event Player, Current Array Element), <=, Player Variable(
+					Event Player, DistanceToAllowLunge))), Is In View Angle(Event Player, Position Of(Current Array Element), Global Variable(
+					ViewAngle))), Angle Between Vectors(Facing Direction Of(Event Player), Direction Towards(Eye Position(Event Player),
+					Eye Position(Current Array Element))))));
 			End;
 			Set Player Variable(Event Player, PlayerInRange, True);
 		Else;
-			disabled Set Player Variable(Event Player, PlayerTargeted, Vector(0, -20.000, 0));
+			disabled Set Player Variable(Event Player, PlayerTargetedCords, Vector(0, -20.000, 0));
 			Set Player Variable(Event Player, PlayerInRange, False);
 		End;
 		Set Player Variable(Event Player, InDistanceOfBomb, Compare(Distance Between(Position Of(Event Player), Global Variable(
@@ -464,7 +472,7 @@ rule("Create target particle")
 	actions
 	{
 		Create Effect(Filtered Array(Event Player, Player Variable(Event Player, PlayerInRange)), Bad Aura, Red, Player Variable(
-			Event Player, PlayerTargeted), 1, Visible To Position and Radius);
+			Event Player, PlayerTargetedCords), 1, Visible To Position and Radius);
 	}
 }
 
@@ -569,11 +577,13 @@ rule("Genji - Delay melee")
 	{
 		Is Button Held(Event Player, Melee) == True;
 		Is Alive(Event Player) == True;
+		Player Variable(Event Player, TimeSinceWeaponUsed) >= 0.900;
 	}
 
 	actions
 	{
-		Play Effect(Event Player, Buff Impact Sound, White, Event Player, 100);
+		Set Player Variable(Event Player, TimeSinceWeaponUsed, 0);
+		Play Effect(Event Player, Buff Impact Sound, White, Event Player, 80);
 		Set Player Variable(Event Player, LungeEnabled, True);
 		"This delay is used to simulate the energy swords cast. Without this, Genji's cast is next to nothing and can kill Torb in every fight."
 		Wait(0.280, Ignore Condition);
@@ -584,6 +594,7 @@ rule("Genji - Delay melee")
 		Wait(0.050, Ignore Condition);
 		Stop Holding Button(Event Player, Melee);
 		Disallow Button(Event Player, Melee);
+		Apply Impulse(Event Player, Down, 50, To World, Cancel Contrary Motion);
 	}
 }
 
@@ -619,26 +630,32 @@ rule("Lunge at player")
 
 	actions
 	{
+		"This is an extremely complex arbitray system that tries it's best to replicate Halo's lunge system. It isn't perfect and it has a lot of quirks in it but it might be as close as we get. I would suggest leaving this to the pros and not touching this rule."
 		Set Player Variable(Event Player, IsLunging, True);
 		Set Player Variable(Event Player, LungeTime, 0);
-		If(Compare(Distance Between(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), >, 2.500));
+		If(Compare(Distance Between(Eye Position(Event Player), Player Variable(Event Player, PlayerTargetedCords)), >, 2.500));
 			Start Forcing Throttle(Event Player, 1, 1, 0, 0, 0, 0);
-			disabled If(Is On Ground(Event Player));
-				Apply Impulse(Event Player, Down, 2, To World, Cancel Contrary Motion);
-			disabled End;
-			Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), 200,
+			"This makes sure you lose all current velocity you have otherwise lunge can launch you to space."
+			Apply Impulse(Event Player, Down, 2, To World, Cancel Contrary Motion);
+			Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargetedCords)), 200,
 				To World, Direction and Turn Rate);
+			"This will apply constant lugnes every .001 seconds until you are close enough to the person you're targeting."
 			While(And(Compare(Player Variable(Event Player, LungeTime), <, 1), Compare(Angle Between Vectors(Facing Direction Of(Event Player),
-				Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted))), <, 90)));
-				If(Compare(Distance Between(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), >=, 2));
-					Apply Impulse(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargeted)), Add(
-						Distance Between(Player Variable(Event Player, PlayerTargeted), Eye Position(Event Player)), Player Variable(Event Player,
+				Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargetedCords))), <, 90)));
+				If(Compare(Distance Between(Eye Position(Event Player), Player Variable(Event Player, PlayerTargetedCords)), >=, 2));
+					Apply Impulse(Event Player, Direction Towards(Eye Position(Event Player), Player Variable(Event Player, PlayerTargetedCords)), Add(
+						Distance Between(Player Variable(Event Player, PlayerTargetedCords), Eye Position(Event Player)), Player Variable(Event Player,
 						UpwardsImpluseHeight)), To World, Cancel Contrary Motion);
 				Else;
+					"This is really the only action that is the \"remove all velocity command\" blizzard pls fix"
 					Apply Impulse(Event Player, Multiply(Facing Direction Of(Event Player), -1.000), 0.250, To World, Cancel Contrary Motion);
 					Set Player Variable(Event Player, LungeTime, 10);
 				End;
 				Wait(0.001, Ignore Condition);
+			End;
+			If(Not(Is Alive(Player Variable(Event Player, PlayerTargeted))));
+				"If you lunge at a player in Halo, it is a guaranteed kill. This will make sure that if OW doesn't think you killed them you actually will."
+				Kill(Player Variable(Event Player, PlayerTargeted), Event Player);
 			End;
 			Apply Impulse(Event Player, Down, 0.500, To World, Cancel Contrary Motion);
 			Apply Impulse(Event Player, Multiply(Facing Direction Of(Event Player), -1.000), 0.500, To World, Cancel Contrary Motion);
