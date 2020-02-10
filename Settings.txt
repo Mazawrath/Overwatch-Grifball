@@ -81,6 +81,7 @@ variables
 		7: BombTimer
 		8: BombCountdownText
 		9: RespawnRequested
+		10: HeroSwapCooldownTime
 
 	player:
 		1: PlayerTargetedCords
@@ -98,6 +99,7 @@ variables
 		13: IsLunging
 		14: LungeTime
 		15: PlayerTargeted
+		16: ChangingHerosCountdown
 }
 
 subroutines
@@ -240,6 +242,7 @@ rule("Spawn team 1")
 
 	actions
 	{
+		Set Player Variable(Event Player, ChangingHerosCountdown, 0);
 		Set Status(Event Player, Null, Invincible, 1.750);
 		If(Compare(Random Integer(0, 1), ==, 0));
 			Teleport(Event Player, Vector(17, 0, Random Real(5, 18)));
@@ -267,6 +270,7 @@ rule("Spawn team 2")
 
 	actions
 	{
+		Set Player Variable(Event Player, ChangingHerosCountdown, 0);
 		Set Status(Event Player, Null, Invincible, 1.750);
 		If(Compare(Random Integer(0, 1), ==, 0));
 			Teleport(Event Player, Vector(-17.000, 0, Random Real(5, 18)));
@@ -292,6 +296,7 @@ rule("Set global variables")
 		Set Global Variable(BombTimer, 3);
 		Chase Global Variable At Rate(BombCountdown, 0, 1, Destination and Rate);
 		Disable Built-In Game Mode Scoring;
+		Set Global Variable(HeroSwapCooldownTime, 1.500);
 	}
 }
 
@@ -313,6 +318,7 @@ rule("Set player variables")
 		Set Player Variable(Event Player, ReloadButtonIsHeld, 0);
 		Chase Player Variable At Rate(Event Player, TimeSinceReloadHeld, 5, 1, Destination and Rate);
 		Chase Player Variable At Rate(Event Player, LungeTime, 10, 1, Destination and Rate);
+		Chase Player Variable At Rate(Event Player, ChangingHerosCountdown, 0, 1, Destination and Rate);
 	}
 }
 
@@ -337,7 +343,7 @@ rule("Torbjorn - Set player variables")
 		Set Player Variable(Event Player, TimeSinceWeaponUsed, 1);
 		Chase Player Variable At Rate(Event Player, TimeSinceWeaponUsed, 20, 1, Destination and Rate);
 		Allow Button(Event Player, Jump);
-		Set Damage Dealt(Event Player, 100);
+		Set Player Variable(Event Player, ChangingHerosCountdown, Global Variable(HeroSwapCooldownTime));
 	}
 }
 
@@ -362,6 +368,7 @@ rule("Genji - Set player variables")
 		Set Primary Fire Enabled(Event Player, False);
 		Set Player Variable(Event Player, TimeSinceWeaponUsed, 5);
 		Chase Player Variable At Rate(Event Player, TimeSinceWeaponUsed, 20, 1, Destination and Rate);
+		Set Player Variable(Event Player, ChangingHerosCountdown, Global Variable(HeroSwapCooldownTime));
 	}
 }
 
@@ -379,6 +386,7 @@ rule("Torbjorn - Lock hammer after swing")
 		Is Button Held(Event Player, Primary Fire) == True;
 		Player Variable(Event Player, PrimaryButtonIsHeld) == False;
 		Is Alive(Event Player) == True;
+		Player Variable(Event Player, ChangingHerosCountdown) == 0;
 	}
 
 	actions
@@ -410,7 +418,7 @@ rule("Torbjorn - Unlock hammer after swing")
 	{
 		Is Button Held(Event Player, Primary Fire) == False;
 		Player Variable(Event Player, PrimaryButtonIsHeld) == True;
-		Player Variable(Event Player, TimeSinceWeaponUsed) >= 0.600;
+		Player Variable(Event Player, TimeSinceWeaponUsed) >= 0.700;
 	}
 
 	actions
@@ -577,11 +585,13 @@ rule("Genji - Delay melee")
 	{
 		Is Button Held(Event Player, Melee) == True;
 		Is Alive(Event Player) == True;
-		Player Variable(Event Player, TimeSinceWeaponUsed) >= 0.900;
+		Player Variable(Event Player, TimeSinceWeaponUsed) >= 0.895;
+		Player Variable(Event Player, ChangingHerosCountdown) == 0;
 	}
 
 	actions
 	{
+		"I REALLY suggest NOT touching this rule. Torbjorn has about a .35 cast from click to kill. Genji uses melee and has a next to nothing cast time. This delay simulates a casting time for Genji's weapon."
 		Set Player Variable(Event Player, TimeSinceWeaponUsed, 0);
 		Play Effect(Event Player, Buff Impact Sound, White, Event Player, 80);
 		Set Player Variable(Event Player, LungeEnabled, True);
@@ -653,14 +663,16 @@ rule("Lunge at player")
 				End;
 				Wait(0.001, Ignore Condition);
 			End;
-			If(Not(Is Alive(Player Variable(Event Player, PlayerTargeted))));
-				"If you lunge at a player in Halo, it is a guaranteed kill. This will make sure that if OW doesn't think you killed them you actually will."
-				Kill(Player Variable(Event Player, PlayerTargeted), Event Player);
-			End;
 			Apply Impulse(Event Player, Down, 0.500, To World, Cancel Contrary Motion);
 			Apply Impulse(Event Player, Multiply(Facing Direction Of(Event Player), -1.000), 0.500, To World, Cancel Contrary Motion);
 			Stop Facing(Event Player);
 			Stop Forcing Throttle(Event Player);
+		End;
+		Wait(0.250, Ignore Condition);
+		If(And(Is Alive(Player Variable(Event Player, PlayerTargeted)), Not(Has Status(Player Variable(Event Player, PlayerTargeted),
+			Invincible))));
+			"If you lunge at a player in Halo, it is a guaranteed kill. This will make sure that if OW doesn't think you killed them you actually will."
+			Kill(Player Variable(Event Player, PlayerTargeted), Event Player);
 		End;
 		Set Player Variable(Event Player, IsLunging, False);
 	}
@@ -712,6 +724,7 @@ rule("Pickup bomb")
 		disabled Is Button Held(Event Player, Reload) == True;
 		Is Game In Progress == True;
 		Player Variable(Event Player, TimeSinceReloadHeld) >= 2;
+		Is Alive(Event Player) == True;
 	}
 
 	actions
